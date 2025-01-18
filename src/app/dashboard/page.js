@@ -23,7 +23,17 @@ export default function Dashboard() {
   const [teams, setTeams] = useState([]);
   const [amount, setAmount] = useState();
   const [error, setError] = useState("");
+  const [teamId, setTeamId] = useState();
   const [activePosition, setActivePosition] = useState("GK");
+  const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [selectedPlayer, setSelectedPlayer] = useState(null);
+  const [sellPrice, setSellPrice] = useState("");
+
+  const handleListPlayer = (player) => {
+    setSelectedPlayer(player);
+    setIsPopupOpen(true);
+  };
+
   const router = useRouter();
 
   useEffect(() => {
@@ -40,6 +50,8 @@ export default function Dashboard() {
       try {
         const response = await fetch(`/api/team-status?userId=${userId}`);
         const data = await response.json();
+
+        setTeamId(data?.team?.owner)
         setAmount(data?.team?.budget);
         setTeams(data?.team?.players || []);
       } catch (err) {
@@ -51,6 +63,38 @@ export default function Dashboard() {
   }, [router]);
 
   const positions = ["GK", "DEF", "MID", "ATT"];
+
+  const handleSellPlayer = async () => {
+    if (!sellPrice) {
+      alert("Please enter a sell price.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/transfer-market", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          playerId: selectedPlayer._id,
+          sellPrice,
+          sellerId : teamId
+        }),
+      });
+
+      if (response.ok) {
+        alert("Player listed on the transfer market!");
+        setIsPopupOpen(false);
+        setSellPrice("");
+      } else {
+        alert("Failed to list the player. Try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred.");
+    }
+  };
 
   return (
     <div className=" bg-gray-900">
@@ -107,7 +151,6 @@ export default function Dashboard() {
               </button>
             ))}
           </div>
-
         </div>
 
         {/* Players Griddd */}
@@ -133,6 +176,13 @@ export default function Dashboard() {
                       {player.position}
                     </span>
                   </div>
+                  {/* trandfer button */}
+                  <button
+                    className="bg-red-500 text-white px-3 py-1 rounded-md text-sm mt-2"
+                    onClick={() => handleListPlayer(player)}
+                  >
+                    List on Transfer Market
+                  </button>
                   <p className="text-sm text-gray-400 mt-1">
                     Value: {formatCurrency(player.value)}
                   </p>
@@ -194,6 +244,35 @@ export default function Dashboard() {
               </div>
             ))}
         </div>
+
+        {isPopupOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-lg w-96">
+              <h3 className="text-lg font-bold">Set Sell Price</h3>
+              <input
+                type="number"
+                value={sellPrice}
+                onChange={(e) => setSellPrice(e.target.value)}
+                placeholder="Enter sell price"
+                className="w-full p-2 border border-gray-300 rounded-md mt-4 text-black"
+              />
+              <div className="flex justify-end gap-2 mt-4">
+                <button
+                  className="bg-gray-300 px-4 py-2 rounded-md"
+                  onClick={() => setIsPopupOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                  onClick={handleSellPlayer}
+                >
+                  List Player
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
