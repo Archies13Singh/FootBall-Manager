@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Shield, Users, Gauge, Wallet } from "lucide-react";
+import Link from "next/link";
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat("en-US", {
@@ -28,6 +29,7 @@ export default function Dashboard() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [sellPrice, setSellPrice] = useState("");
+  const [loading, setLoading] = useState(true);
 
   const handleListPlayer = (player) => {
     setSelectedPlayer(player);
@@ -47,6 +49,7 @@ export default function Dashboard() {
     const userId = decodedToken.userId;
 
     const fetchTeams = async () => {
+      setLoading(true);
       try {
         const response = await fetch(`/api/team-status?userId=${userId}`);
         const data = await response.json();
@@ -56,6 +59,8 @@ export default function Dashboard() {
         setTeams(data?.team?.players || []);
       } catch (err) {
         setError("Something went wrong while fetching teams.");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -83,11 +88,30 @@ export default function Dashboard() {
         }),
       });
       const responseData = await response.json();
-      console.log(response, "resss");
       if (!responseData.error) {
         alert("Player listed on the transfer market!");
         setIsPopupOpen(false);
         setSellPrice("");
+
+        // Call fetchTeams again to refresh the data
+        const token = localStorage.getItem("token");
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
+        const userId = decodedToken.userId;
+
+        const fetchTeams = async () => {
+          try {
+            const response = await fetch(`/api/team-status?userId=${userId}`);
+            const data = await response.json();
+
+            setTeamId(data?.team?.owner);
+            setAmount(data?.team?.budget);
+            setTeams(data?.team?.players || []);
+          } catch (err) {
+            setError("Something went wrong while fetching teams.");
+          }
+        };
+
+        fetchTeams();
       } else {
         alert("Failed to list the player. Try again.");
       }
@@ -132,14 +156,20 @@ export default function Dashboard() {
           </div>
         )}
 
-        {/* Position Tabs */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-gray-800 rounded-lg p-1 gap-1">
-            {positions.map((position) => (
-              <button
-                key={position}
-                onClick={() => setActivePosition(position)}
-                className={`
+        {loading ? (
+          <div className="flex justify-center items-center py-6">
+            <div className="animate-spin border-4 border-t-4 border-blue-500 border-solid rounded-full w-12 h-12"></div>
+          </div>
+        ) : (
+          <div>
+            {/* Position Tabs */}
+            <div className="flex justify-between mb-6">
+              <div className="inline-flex bg-gray-800 rounded-lg p-1 gap-1">
+                {positions.map((position) => (
+                  <button
+                    key={position}
+                    onClick={() => setActivePosition(position)}
+                    className={`
                   px-4 py-2 rounded-md text-sm font-medium transition-colors
                   ${
                     activePosition === position
@@ -147,104 +177,114 @@ export default function Dashboard() {
                       : "text-white"
                   }
                 `}
-              >
-                {position}
-              </button>
-            ))}
-          </div>
-        </div>
+                  >
+                    {position}
+                  </button>
+                ))}
+              </div>
+              <div className="inline-flex bg-gray-800 rounded-lg p-1 gap-1">
+                <Link
+                  href="/transfer-market"
+                  className=" px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Transfer Market
+                </Link>
+              </div>
+            </div>
 
-        {/* Players Griddd */}
-        <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {teams
-            .filter((player) => player.position === activePosition)
-            .map((player) => (
-              <div
-                key={player._id}
-                className="bg-gray-800 rounded-lg shadow-sm overflow-hidden flex flex-col"
-              >
-                <div className="p-4 border-b border-gray-700">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-lg font-semibold text-white truncate">
-                      {player.name}
-                    </h3>
-                    <span
-                      className={`
+            {/* Players Griddd */}
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {teams
+                .filter((player) => player.position === activePosition)
+                .map((player) => (
+                  <div
+                    key={player._id}
+                    className="bg-gray-800 rounded-lg shadow-sm overflow-hidden flex flex-col"
+                  >
+                    <div className="p-4 border-b border-gray-700">
+                      <div className="flex items-center justify-between gap-2">
+                        <h3 className="text-lg font-semibold text-white truncate">
+                          {player.name}
+                        </h3>
+                        <span
+                          className={`
                       px-2 py-1 text-xs font-medium text-white rounded-full shrink-0
                       ${positionColors[player.position]}
                     `}
-                    >
-                      {player.position}
-                    </span>
-                  </div>
-                  {/* trandfer button */}
-                  <button
-                    className="bg-red-500 text-white px-3 py-1 rounded-md text-sm mt-2"
-                    onClick={() => handleListPlayer(player)}
-                  >
-                    List on Transfer Market
-                  </button>
-                  <p className="text-sm text-gray-400 mt-1">
-                    Value: {formatCurrency(player.value)}
-                  </p>
-                </div>
+                        >
+                          {player.position}
+                        </span>
+                      </div>
+                      {/* trandfer button */}
+                      <button
+                        className="bg-red-500 text-white px-3 py-1 rounded-md text-sm mt-2"
+                        onClick={() => handleListPlayer(player)}
+                      >
+                        List on Transfer Market
+                      </button>
+                      <p className="text-sm text-gray-400 mt-1">
+                        Value: {formatCurrency(player.value)}
+                      </p>
+                    </div>
 
-                {/* Player Stats */}
-                <div className="p-4 space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm flex items-center gap-2 text-gray-300">
-                        <Shield className="w-4 h-4" /> Attack
-                      </span>
-                      <span className="text-sm font-medium text-white">
-                        {player.stats.attack}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-blue-500 rounded-full transition-all duration-300"
-                        style={{ width: `${player.stats.attack}%` }}
-                      />
-                    </div>
-                  </div>
+                    {/* Player Stats */}
+                    <div className="p-4 space-y-4">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm flex items-center gap-2 text-gray-300">
+                            <Shield className="w-4 h-4" /> Attack
+                          </span>
+                          <span className="text-sm font-medium text-white">
+                            {player.stats.attack}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-blue-500 rounded-full transition-all duration-300"
+                            style={{ width: `${player.stats.attack}%` }}
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm flex items-center gap-2 text-gray-300">
-                        <Users className="w-4 h-4" /> Defense
-                      </span>
-                      <span className="text-sm font-medium text-white">
-                        {player.stats.defense}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-green-500 rounded-full transition-all duration-300"
-                        style={{ width: `${player.stats.defense}%` }}
-                      />
-                    </div>
-                  </div>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm flex items-center gap-2 text-gray-300">
+                            <Users className="w-4 h-4" /> Defense
+                          </span>
+                          <span className="text-sm font-medium text-white">
+                            {player.stats.defense}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-green-500 rounded-full transition-all duration-300"
+                            style={{ width: `${player.stats.defense}%` }}
+                          />
+                        </div>
+                      </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm flex items-center gap-2 text-gray-300">
-                        <Gauge className="w-4 h-4" /> Speed
-                      </span>
-                      <span className="text-sm font-medium text-white">
-                        {player.stats.speed}%
-                      </span>
-                    </div>
-                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-yellow-500 rounded-full transition-all duration-300"
-                        style={{ width: `${player.stats.speed}%` }}
-                      />
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm flex items-center gap-2 text-gray-300">
+                            <Gauge className="w-4 h-4" /> Speed
+                          </span>
+                          <span className="text-sm font-medium text-white">
+                            {player.stats.speed}%
+                          </span>
+                        </div>
+                        <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-yellow-500 rounded-full transition-all duration-300"
+                            style={{ width: `${player.stats.speed}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            ))}
-        </div>
+                ))}
+            </div>
+          </div>
+        )}
 
         {isPopupOpen && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">

@@ -23,7 +23,7 @@ export async function POST(req) {
       );
     }
 
-    // Extract the player from the team
+    // Extract the player from the team with all properties
     const player = team.players.find((p) => p._id.toString() === playerId);
 
     if (!player) {
@@ -32,6 +32,25 @@ export async function POST(req) {
         { status: 404 }
       );
     }
+
+    // Create player object with all properties
+    const playerData = {
+      _id: player._id,
+      name: player.name,
+      position: player.position,
+      value: player.value,
+      stats: {
+        attack: player.stats.attack,
+        defense: player.stats.defense,
+        speed: player.stats.speed
+      },
+      sellPrice: sellPrice,
+      originalTeam: {
+        id: team._id,
+        name: team.name,
+        owner: team.owner
+      }
+    };
 
     // Check if a listing for the same seller already exists in the transfer market
     let listing = await TransferMarket.findOne({ seller: sellerId });
@@ -49,16 +68,12 @@ export async function POST(req) {
         );
       }
 
-      // Add the new player to the existing listing
+      // Add the new player to the existing listing with all properties
       const updatedListing = await TransferMarket.findOneAndUpdate(
         { seller: sellerId },
         {
           $push: {
-            player: {
-              ...player.toObject(),
-              team: { ...team.toObject(), players: undefined },
-              sellPrice,
-            },
+            player: playerData
           },
         },
         { new: true }
@@ -68,15 +83,8 @@ export async function POST(req) {
     } else {
       // Create a new listing if none exists for this seller
       listing = await TransferMarket.create({
-        player: [
-          {
-            ...player.toObject(),
-            team: { ...team.toObject(), players: undefined },
-            sellPrice,
-          },
-        ],
-        seller: sellerId,
-        sellPrice,
+        player: [playerData],
+        seller: sellerId
       });
     }
 
@@ -84,92 +92,63 @@ export async function POST(req) {
     team.players = team.players.filter((p) => p._id.toString() !== playerId);
     await team.save();
 
-    return new Response(JSON.stringify({ success: true, listing }), {
+    return new Response(JSON.stringify({ 
+      success: true, 
+      listing,
+      message: "Player successfully listed in transfer market"
+    }), {
       status: 200,
     });
   } catch (error) {
     console.error("Error listing player:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined 
+    }), {
       status: 500,
     });
   }
 }
 
-export async function PUT(req) {
+export async function GET(req) {
   try {
-    await dbConnect();
-    const { playerId, buyerId } = await req.json();
+    await dbConnect()
 
-    // Find the listing in the transfer market
-    const listing = await TransferMarket.findOne({ "player._id": playerId });
+    // Modify the populate to include all required fields and ensure proper path
+    const listings = await TransferMarket.find()
+      .populate({
+        path: 'seller',
+        select: 'name email',
+        model: 'User' 
+      })
+      .lean()
 
-    if (!listing) {
-      return new Response(
-        JSON.stringify({ error: "Player not found in transfer market." }),
-        { status: 404 }
-      );
-    }
-
-    // Transfer player to buyer's team
-    const buyerTeam = await Team.findOne({ owner: buyerId });
-    if (!buyerTeam || buyerTeam.budget < listing.player.sellPrice) {
-      return new Response(
-        JSON.stringify({ error: "Insufficient budget or team not found." }),
-        { status: 400 }
-      );
-    }
-
-    buyerTeam.player.push(listing.player);
-    buyerTeam.budget -= listing.player.sellPrice;
-
-    // Increase seller's budget
-    const sellerTeam = await Team.findOne({ owner: listing.seller });
-    sellerTeam.budget += listing.player.sellPrice;
-
-    await buyerTeam.save();
-    await sellerTeam.save();
-
-    // Remove player from transfer market
-    await listing.delete();
-
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
+    return new Response(
+      JSON.stringify({
+        success: true,
+        count: listings.length,
+        listings,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
-  }
-}
-
-export async function DELETE(req) {
-  try {
-    await dbConnect();
-    const { playerId, sellerId } = await req.json();
-
-    // Find the listing in the transfer market
-    const listing = await TransferMarket.findOne({
-      "player._id": playerId,
-      seller: sellerId,
-    });
-
-    if (!listing) {
-      return new Response(
-        JSON.stringify({ error: "Player not found in transfer market." }),
-        { status: 404 }
-      );
-    }
-
-    // Add player back to seller's team
-    const sellerTeam = await Team.findOne({ owner: sellerId });
-    sellerTeam.player.push(listing.player);
-    await sellerTeam.save();
-
-    // Remove player from transfer market
-    await listing.delete();
-
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+    console.error('Error fetching transfer market listings:', error)
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: 'Failed to fetch transfer market listings',
+      }),
+      {
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    )
   }
 }
