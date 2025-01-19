@@ -17,4 +17,4 @@ const TransferMarketSchema = new mongoose.Schema({
 });
 
 
-export default mongoose.models.TransferMarket || mongoose.model("TransferMarket", transferMarketSchema);
+export default mongoose.models.TransferMarket || mongoose.model("TransferMarket", TransferMarketSchema);

@@ -26,6 +26,7 @@ export default function Dashboard() {
   const [teamId, setTeamId] = useState();
   const [activePosition, setActivePosition] = useState("GK");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [listUpdate, setListUpdate] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [sellPrice, setSellPrice] = useState("");
 
@@ -51,7 +52,7 @@ export default function Dashboard() {
         const response = await fetch(`/api/team-status?userId=${userId}`);
         const data = await response.json();
 
-        setTeamId(data?.team?.owner)
+        setTeamId(data?.team?.owner);
         setAmount(data?.team?.budget);
         setTeams(data?.team?.players || []);
       } catch (err) {
@@ -60,7 +61,7 @@ export default function Dashboard() {
     };
 
     fetchTeams();
-  }, [router]);
+  }, [router, listUpdate]);
 
   const positions = ["GK", "DEF", "MID", "ATT"];
 
@@ -79,14 +80,16 @@ export default function Dashboard() {
         body: JSON.stringify({
           playerId: selectedPlayer._id,
           sellPrice,
-          sellerId : teamId
+          sellerId: teamId,
         }),
       });
-
-      if (response.ok) {
+      const responseData = await response.json();
+      console.log(response, "resss");
+      if (!responseData.error) {
         alert("Player listed on the transfer market!");
         setIsPopupOpen(false);
         setSellPrice("");
+        setListUpdate(true);
       } else {
         alert("Failed to list the player. Try again.");
       }

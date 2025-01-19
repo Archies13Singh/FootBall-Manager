@@ -33,7 +33,7 @@ export async function POST(req) {
       );
     }
 
-    // Add the player to the transfer market
+    // Add the player to the transfer maket
     const listing = await TransferMarket.create({
       player: { ...player.toObject(), sellPrice },
       seller: sellerId,
@@ -44,7 +44,6 @@ export async function POST(req) {
     team.players = team.players.filter((p) => p._id.toString() !== playerId);
     await team.save();
 
-    console.log("Player listed for sale:", listing);
 
     return new Response(JSON.stringify({ success: true, listing }), {
       status: 200,
