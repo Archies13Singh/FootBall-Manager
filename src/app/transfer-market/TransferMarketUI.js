@@ -26,7 +26,7 @@ export function TransferMarketUI({ listings }) {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
-      router.push("/login");
+      router.push("/");
       return;
     }
     const filtered = listings.flatMap((listing) =>
