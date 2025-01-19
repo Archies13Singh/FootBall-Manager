@@ -2,10 +2,10 @@ import Team from "../models/Team";
 
 
 const PLAYER_NAMES = [
-  "John Smith", "David Jones", "Michael Brown", "James Wilson", "Robert Taylor",
-  "William Anderson", "Joseph Thomas", "Charles Jackson", "Thomas White", "Christopher Harris",
-  "Daniel Martin", "Matthew Thompson", "Anthony Garcia", "Mark Martinez", "Donald Robinson",
-  "Steven Clark", "Paul Rodriguez", "Andrew Lewis", "Kevin Lee", "Brian Walker"
+  "Alex Walker", "Samuel Turner", "Ethan Carter", "Joshua Mitchell", "Lucas Scott",
+  "Daniel Harris", "Henry Collins", "Oscar Morgan", "Jack Evans", "Liam Adams",
+  "David King", "Nathan White", "Matthew Green", "Benjamin Hall", "Oliver Young",
+  "William Parker", "Elijah Rodriguez", "Mason Phillips", "James Gray", "Gabriel Cooper"
 ];
 
 // Ensure generateUniquePlayer returns correctly formatted player objects
@@ -19,7 +19,7 @@ const generateUniquePlayer = (usedNames, position) => {
   return {
     name: randomName,
     position,
-    value: Math.floor(Math.random() * 1000000) + 500000,
+    value: Math.floor(Math.random() * 100000) + 500000,
     stats: {
       attack: Math.floor(Math.random() * 100),
       defense: Math.floor(Math.random() * 100),

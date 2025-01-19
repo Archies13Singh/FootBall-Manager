@@ -142,7 +142,7 @@ export default function Dashboard() {
                 <Wallet className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-xs font-medium">Earnings</p>
+                <p className="text-xs font-medium">Amount</p>
                 <p className="text-sm font-bold">{formatCurrency(amount)}</p>
               </div>
             </div>
@@ -280,37 +280,38 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
+                    {isPopupOpen && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="bg-white p-6 rounded-lg w-96">
+                          <h3 className="text-lg font-bold">Set Sell Price</h3>
+                          <input
+                            type="number"
+                            value={sellPrice}
+                            onChange={(e) => setSellPrice(e.target.value)}
+                            placeholder="Enter sell price"
+                            className="w-full p-2 border border-gray-300 rounded-md mt-4 text-black"
+                            min={player.value}
+                            max={1000000}
+                          />
+                          <div className="flex justify-end gap-2 mt-4">
+                            <button
+                              className="bg-gray-300 px-4 py-2 rounded-md"
+                              onClick={() => setIsPopupOpen(false)}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              className="bg-blue-500 text-white px-4 py-2 rounded-md"
+                              onClick={handleSellPlayer}
+                            >
+                              List Player
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
-            </div>
-          </div>
-        )}
-
-        {isPopupOpen && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <div className="bg-white p-6 rounded-lg w-96">
-              <h3 className="text-lg font-bold">Set Sell Price</h3>
-              <input
-                type="number"
-                value={sellPrice}
-                onChange={(e) => setSellPrice(e.target.value)}
-                placeholder="Enter sell price"
-                className="w-full p-2 border border-gray-300 rounded-md mt-4 text-black"
-              />
-              <div className="flex justify-end gap-2 mt-4">
-                <button
-                  className="bg-gray-300 px-4 py-2 rounded-md"
-                  onClick={() => setIsPopupOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  className="bg-blue-500 text-white px-4 py-2 rounded-md"
-                  onClick={handleSellPlayer}
-                >
-                  List Player
-                </button>
-              </div>
             </div>
           </div>
         )}

@@ -11,15 +11,17 @@ const positionColors = {
 };
 
 export function TransferMarketUI({ listings }) {
-  const router = useRouter()
+  const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 1000000000]);
+  const [priceRange, setPriceRange] = useState([0, 6000000]);
   const [filteredPlayers, setFilteredPlayers] = useState([]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: "USD",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -60,9 +62,14 @@ export function TransferMarketUI({ listings }) {
   const handlePriceRangeChange = (e) => {
     const value = parseInt(e.target.value);
     const isMinSlider = e.target.id === "minPrice";
-    setPriceRange((prev) =>
-      isMinSlider ? [value, prev[1]] : [prev[0], value]
-    );
+
+    setPriceRange((prev) => {
+      if (isMinSlider) {
+        return [value, Math.max(value, prev[1])];
+      } else {
+        return [Math.min(prev[0], value), value];
+      }
+    });
   };
 
   return (
@@ -78,21 +85,32 @@ export function TransferMarketUI({ listings }) {
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
         </div>
-        <div className="flex flex-col gap-2 w-full sm:w-64">
+        <div className="flex-2 flex-col gap-2 w-full sm:w-64">
           <label className="text-white text-sm">Price Range</label>
           <div className="relative h-2 bg-gray-700 rounded-md">
             <div
               className="absolute h-full bg-blue-500 rounded-md"
               style={{
-                left: `${(priceRange[0] / 1000000000) * 100}%`,
-                right: `${100 - (priceRange[1] / 1000000000) * 100}%`,
+                left: `${(priceRange[0] / 6000000) * 100}%`,
+                right: `${100 - (priceRange[1] / 6000000) * 100}%`,
               }}
             ></div>
             <input
               type="range"
+              id="minPrice"
+              min="0"
+              max="6000000"
+              step="1000"
+              value={priceRange[0]}
+              onChange={handlePriceRangeChange}
+              className="absolute w-full h-full opacity-0 cursor-pointer"
+            />
+            <input
+              type="range"
               id="maxPrice"
               min="0"
-              max="897654354657687"
+              max="6000000"
+              step="1000"
               value={priceRange[1]}
               onChange={handlePriceRangeChange}
               className="absolute w-full h-full opacity-0 cursor-pointer"
@@ -137,7 +155,6 @@ export function TransferMarketUI({ listings }) {
             </div>
 
             <div className="p-4 space-y-4">
-              {/* Player Stats */}
               <div className="space-y-2">
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
@@ -196,6 +213,13 @@ export function TransferMarketUI({ listings }) {
               <p>
                 Listed: {new Date(player.listingCreatedAt).toLocaleString()}
               </p>
+            </div>
+            <div className=" bg-red-500 text-white px-3 py-2 rounded-md m-2 text-center text-base">
+              <button
+                onClick={() => {}}
+              >
+                Buy
+              </button>
             </div>
           </div>
         ))}

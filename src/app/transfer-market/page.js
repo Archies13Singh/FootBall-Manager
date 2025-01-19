@@ -34,15 +34,16 @@ export default function TrensferMarketPlayerList() {
               View available players and make transfers
             </p>
           </div>
-
-          <div className="mt-4 sm:mt-0">
-            <div className="inline-flex bg-gray-800 rounded-lg p-1 gap-1 border ">
-              <Link
-                href="/dashboard"
-                className=" px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                Your Team
-              </Link>
+          <div>
+            <div className="mt-4 sm:mt-0">
+              <div className="inline-flex bg-gray-800 rounded-lg p-1 gap-1 border ">
+                <Link
+                  href="/dashboard"
+                  className=" px-4 py-2 rounded-md text-sm font-medium transition-colors"
+                >
+                  Your Team
+                </Link>
+              </div>
             </div>
           </div>
         </div>
