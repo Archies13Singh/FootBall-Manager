@@ -26,7 +26,6 @@ export default function Dashboard() {
   const [teamId, setTeamId] = useState();
   const [activePosition, setActivePosition] = useState("GK");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [listUpdate, setListUpdate] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [sellPrice, setSellPrice] = useState("");
 
@@ -61,7 +60,7 @@ export default function Dashboard() {
     };
 
     fetchTeams();
-  }, [router, listUpdate]);
+  }, [router]);
 
   const positions = ["GK", "DEF", "MID", "ATT"];
 
@@ -89,7 +88,6 @@ export default function Dashboard() {
         alert("Player listed on the transfer market!");
         setIsPopupOpen(false);
         setSellPrice("");
-        setListUpdate(true);
       } else {
         alert("Failed to list the player. Try again.");
       }
